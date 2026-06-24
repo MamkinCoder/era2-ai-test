@@ -1,0 +1,716 @@
+Queue Page Spec
+
+Goal
+
+Implement a full-screen queue page for generation tasks.
+
+The page shows all mocked generation tasks and lets the user inspect, filter, sort, cancel, retry, and clear completed tasks.
+
+Route:
+
+/queue
+
+⸻
+
+Architecture
+
+Follow the current project structure.
+
+Queue logic and queue UI are separate.
+
+Queue state lives in:
+
+entities/generation/model/
+
+Queue page UI lives in:
+
+components/workspace/queue-page/
+
+Route file lives in:
+
+pages/QueuePage.tsx
+
+⸻
+
+Files
+
+pages/QueuePage.tsx
+components/workspace/queue-page/
+  QueuePageContent.tsx
+  QueuePageHeader.tsx
+  QueueStatsGrid.tsx
+  QueueStatCard.tsx
+  QueueToolbar.tsx
+  QueueStatusTabs.tsx
+  QueueSortSelect.tsx
+  QueueTaskList.tsx
+  QueueTaskCard.tsx
+  QueueTaskMeta.tsx
+  QueueTaskActions.tsx
+  queue-page.types.ts
+  index.ts
+
+⸻
+
+pages/QueuePage.tsx
+
+Route-level page only.
+
+Responsibilities:
+
+* set document title if needed
+* render QueuePageContent
+* no queue logic
+* no filtering logic
+* no sorting logic
+
+⸻
+
+QueuePageContent.tsx
+
+Main page container.
+
+Responsibilities:
+
+* read queue state via useQueue()
+* own local filter state
+* own local sort state
+* derive visible tasks
+* derive stat counts
+* compose header, stats, toolbar, task list
+
+Uses:
+
+* QueuePageHeader
+* QueueStatsGrid
+* QueueToolbar
+* QueueTaskList
+
+Does not:
+
+* own queue engine logic
+* own timers
+* mutate task state directly
+
+⸻
+
+QueuePageHeader.tsx
+
+Top page header.
+
+Shows:
+
+* title: “Очередь генераций”
+* subtitle: “Все ваши задачи в реальном времени”
+* action: “Очистить готовые”
+
+Props:
+
+type QueuePageHeaderProps = {
+  onClearCompleted: () => void;
+  canClearCompleted: boolean;
+};
+
+Responsibilities:
+
+* render heading
+* render clear completed action
+* call onClearCompleted when clicked
+
+⸻
+
+QueueStatsGrid.tsx
+
+Stats layout.
+
+Shows four cards:
+
+* В очереди
+* Идёт
+* Готово
+* Ошибка
+
+Props:
+
+type QueueStatsGridProps = {
+  queued: number;
+  running: number;
+  done: number;
+  failed: number;
+};
+
+Responsibilities:
+
+* layout stat cards in grid
+* pass count/color/label to QueueStatCard
+
+⸻
+
+QueueStatCard.tsx
+
+Single stat card.
+
+Props:
+
+type QueueStatCardProps = {
+  label: string;
+  count: number;
+  tone: "muted" | "accent" | "success" | "danger";
+};
+
+Shows:
+
+* colored dot
+* label
+* count
+
+Responsibilities:
+
+* presentational only
+* no queue state access
+
+⸻
+
+QueueToolbar.tsx
+
+Toolbar above task list.
+
+Contains:
+
+* QueueStatusTabs
+* QueueSortSelect
+
+Props:
+
+type QueueToolbarProps = {
+  status: QueueStatusFilter;
+  sort: QueueSortMode;
+  onStatusChange: (status: QueueStatusFilter) => void;
+  onSortChange: (sort: QueueSortMode) => void;
+};
+
+Responsibilities:
+
+* layout filter and sort controls
+* no direct queue state access
+
+⸻
+
+QueueStatusTabs.tsx
+
+Status filter tabs.
+
+Filters:
+
+type QueueStatusFilter =
+  | "all"
+  | "queued"
+  | "running"
+  | "done"
+  | "failed";
+
+Labels:
+
+* Все
+* В очереди
+* Идёт
+* Готово
+* Ошибка
+
+Props:
+
+type QueueStatusTabsProps = {
+  value: QueueStatusFilter;
+  onChange: (value: QueueStatusFilter) => void;
+};
+
+Responsibilities:
+
+* render tab buttons
+* active tab styling
+* emit selected filter
+
+⸻
+
+QueueSortSelect.tsx
+
+Sort selector.
+
+Sort modes:
+
+type QueueSortMode =
+  | "newest"
+  | "oldest"
+  | "activeFirst";
+
+Labels:
+
+* Сначала новые
+* Сначала старые
+* Сначала активные
+
+Props:
+
+type QueueSortSelectProps = {
+  value: QueueSortMode;
+  onChange: (value: QueueSortMode) => void;
+};
+
+Responsibilities:
+
+* render sort control
+* emit selected sort
+
+Implementation can be:
+
+* simple button/dropdown
+* Radix Select if convenient
+* no custom global state
+
+⸻
+
+QueueTaskList.tsx
+
+Task list container.
+
+Props:
+
+type QueueTaskListProps = {
+  tasks: QueueTaskViewModel[];
+  onCancel: (taskId: string) => void;
+  onRetry: (taskId: string) => void;
+};
+
+Responsibilities:
+
+* render QueueTaskCard for each task
+* render empty filtered state if no tasks match filter
+* no queue context access
+
+⸻
+
+QueueTaskCard.tsx
+
+Single queue task row/card.
+
+Props:
+
+type QueueTaskCardProps = {
+  task: QueueTaskViewModel;
+  onCancel: (taskId: string) => void;
+  onRetry: (taskId: string) => void;
+};
+
+Shows:
+
+* task icon/thumbnail
+* prompt/title
+* task metadata
+* progress bar for running tasks
+* progress percent for running tasks
+* status badge
+* action buttons
+
+Responsibilities:
+
+* task row layout
+* choose whether to show progress
+* compose QueueTaskMeta and QueueTaskActions
+
+⸻
+
+QueueTaskMeta.tsx
+
+Metadata line under task title.
+
+Props:
+
+type QueueTaskMetaProps = {
+  modelName: string;
+  status: QueueTaskStatus;
+  credits: number;
+  durationLabel?: string;
+  queuePosition?: number;
+  errorMessage?: string;
+};
+
+Shows:
+
+* model pill
+* duration/credits for running/done
+* queue position for queued
+* error message for failed
+* cancelled message for cancelled if supported
+
+Examples:
+
+Midjourney v6 · ≈ 30 сек · 80 cr
+GPT-4o · позиция 3 в очереди · 6 cr
+ElevenLabs · недостаточно кредитов
+
+Responsibilities:
+
+* present metadata only
+* no actions
+* no queue state access
+
+⸻
+
+QueueTaskActions.tsx
+
+Right-side actions.
+
+Props:
+
+type QueueTaskActionsProps = {
+  taskId: string;
+  status: QueueTaskStatus;
+  onCancel: (taskId: string) => void;
+  onRetry: (taskId: string) => void;
+};
+
+Actions by status:
+
+queued
+
+Shows:
+
+* cancel
+* more
+
+running
+
+Shows:
+
+* cancel
+* more
+
+done
+
+Shows:
+
+* download
+* more
+
+failed
+
+Shows:
+
+* retry
+* more
+
+cancelled
+
+Shows:
+
+* retry
+* more
+
+Responsibilities:
+
+* render correct action buttons by status
+* call parent handlers
+* no direct queue context access
+
+⸻
+
+queue-page.types.ts
+
+Local UI types.
+
+Owns:
+
+export type QueueStatusFilter = "all" | "queued" | "running" | "done" | "failed";
+export type QueueSortMode = "newest" | "oldest" | "activeFirst";
+export type QueueTaskViewModel = {
+  id: string;
+  type: "text" | "image" | "video" | "audio";
+  status: QueueTaskStatus;
+  prompt: string;
+  modelName: string;
+  credits: number;
+  progress: number;
+  createdAt: Date;
+  durationLabel?: string;
+  queuePosition?: number;
+  errorMessage?: string;
+  thumbnailUrl?: string;
+  gradient?: string;
+};
+
+QueueTaskStatus should come from queue model if already defined there.
+
+Do not duplicate domain status types if they already exist in:
+
+entities/generation/model/queue-types.ts
+
+⸻
+
+Private Internal Components
+
+Keep these private inside the closest file unless reused elsewhere:
+
+TaskIcon
+StatusBadge
+ProgressBar
+ModelPill
+EmptyState
+
+Do not create separate files for them yet.
+
+⸻
+
+Data Source
+
+QueuePageContent reads from:
+
+entities/generation/model/queue-context.tsx
+
+Using:
+
+useQueue()
+
+Expected queue API:
+
+const {
+  tasks,
+  cancelTask,
+  retryTask,
+  clearCompleted,
+} = useQueue();
+
+Exact names can change, but responsibilities stay the same.
+
+⸻
+
+Filtering
+
+Filtering is local UI state inside QueuePageContent.
+
+Rules:
+
+all      -> show all tasks
+queued   -> status queued
+running  -> status running
+done     -> status done
+failed   -> status failed
+
+If cancelled is implemented:
+
+* cancelled can appear under all
+* optionally add cancelled tab later
+* not required by current design
+
+⸻
+
+Sorting
+
+Sorting is local UI state inside QueuePageContent.
+
+Rules:
+
+newest      -> createdAt descending
+oldest      -> createdAt ascending
+activeFirst -> running, queued, failed, done, cancelled
+
+⸻
+
+Stats
+
+Stats are derived from full task list, not filtered task list.
+
+Counts:
+
+* queued
+* running
+* done
+* failed
+
+Cancelled is not displayed in top stat cards unless added later.
+
+⸻
+
+Layout
+
+Desktop target width:
+
+max width around 1120px
+centered
+
+Suggested shell:
+
+<main className="min-h-screen bg-[#0E0B0A]">
+  <div className="mx-auto w-full max-w-[1120px] px-4 py-10">
+    ...
+  </div>
+</main>
+
+Desktop sections:
+
+Header
+StatsGrid
+Toolbar
+TaskList
+
+Spacing:
+
+* header bottom to stats
+* stats bottom to toolbar
+* toolbar bottom to list
+
+⸻
+
+Responsive Behavior
+
+Desktop
+
+* stats in 4 columns
+* task cards are horizontal rows
+* actions on right
+* progress visible inline
+
+Tablet
+
+* stats in 2 columns
+* task cards remain mostly horizontal if width allows
+* actions can wrap if needed
+
+Mobile
+
+* stats in 2 columns or 1 column
+* toolbar wraps
+* task card becomes vertical
+* actions move below metadata/right section
+* progress takes full width
+
+⸻
+
+Styling
+
+Use Tailwind.
+
+No CSS modules.
+
+Prefer project tokens:
+
+var(--bg-card)
+var(--bg-pill)
+var(--bg-tag)
+var(--border-primary)
+var(--text-primary)
+var(--text-secondary)
+var(--text-muted)
+hsl(var(--primary))
+
+Use exact Figma colors where needed:
+
+#0E0B0A page bg
+#141110 card bg
+#1A1514 pill bg
+#221C19 progress bg
+#E85420 primary orange
+#FF7A3D active orange
+#34D399 success
+#FF6B6B danger
+#F6EFE9 text primary
+#C8BEB6 text secondary
+#8A7F78 muted text
+#5A504A dim text
+
+⸻
+
+Animation
+
+Use Framer Motion where useful.
+
+Required:
+
+* animate task progress bar width
+* animate task entering/removing from list
+* animate filter/sort list transitions if simple
+
+Do not overbuild.
+
+Task row animation:
+
+initial: opacity 0, y 8
+animate: opacity 1, y 0
+exit: opacity 0, y -8
+
+Use AnimatePresence around task list if convenient.
+
+⸻
+
+Actions
+
+Cancel
+
+Available for:
+
+* queued
+* running
+
+Behavior:
+
+* call queue engine cancel action
+* task becomes cancelled or removed depending queue engine decision
+
+Retry
+
+Available for:
+
+* failed
+* cancelled if supported
+
+Behavior:
+
+* call queue engine retry action
+* task re-enters queue
+
+Clear completed
+
+Available when at least one done task exists.
+
+Behavior:
+
+* remove done tasks from queue state
+* should not remove running/queued/failed
+
+Download
+
+Available for:
+
+* done
+
+Behavior:
+
+* mocked action allowed
+* no real file needed
+
+More
+
+Optional.
+Can be visual only for this assignment unless specific menu behavior is needed.
+
+⸻
+
+Non-Responsibilities
+
+Queue page does not implement:
+
+setInterval
+progress ticks
+FIFO
+MAX_CONCURRENT
+random failure
+timer cleanup
+
+Those belong to:
+
+entities/generation/model/queue-engine.ts
+
+Queue page does not call real backend.
+
+Queue page does not own source of truth.
+
+Queue page is view/controller only.

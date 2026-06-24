@@ -1,0 +1,205 @@
+Queue Feature Specification
+
+Goal
+
+Implement a mocked generation queue system.
+
+The queue is shared between:
+
+* Queue Page
+* Queue Widget
+
+Both consume the same state.
+
+No real backend required.
+
+⸻
+
+Task 1 - Mock Queue Engine
+
+Status: Decided
+
+Requirements
+
+* MAX_CONCURRENT = 2
+* FIFO scheduling
+* Progress updates via timers
+* Random failures (~15%)
+* Different processing speeds per generation type
+* Cancel support
+* Retry support
+* Proper timer cleanup
+* Single source of truth
+
+Ownership
+
+entities/generation
+
+Files
+
+entities/generation/model/queue-engine.ts
+
+Responsibilities:
+
+* scheduler
+* slot management
+* progress ticks
+* failures
+* retries
+* cancellations
+* lifecycle transitions
+
+⸻
+
+entities/generation/model/queue-types.ts
+
+Responsibilities:
+
+* queue task types
+* queue statuses
+* constants
+
+⸻
+
+entities/generation/model/queue-seed.ts
+
+Responsibilities:
+
+* initial mocked dataset
+* 8-12 tasks
+* mixed statuses
+
+⸻
+
+entities/generation/model/queue-context.tsx
+
+Responsibilities:
+
+* QueueProvider
+* useQueue()
+* React integration
+
+State
+
+Single queue state.
+
+Shared through React Context.
+
+QueueProvider added to AppProviders.
+
+___
+
+Architecture
+
+Queue Engine
+↓
+Queue Context
+↓
+Queue Widget
+Queue Page
+
+Single source of truth.
+
+No Redux.
+No MobX.
+No additional backend service.
+
+Current plan is frontend-only mocked queue logic.
+
+
+
+
+
+Yes. Implement mock first as a self-contained engine, then test it before UI.
+
+Do it in this order:
+
+1. queue-types.ts
+2. queue-seed.ts
+3. queue-engine.ts
+4. queue-context.tsx
+5. plug QueueProvider into AppProviders
+6. add temporary QueueDebugPanel
+
+Best immediate test:
+
+temporary debug component
++
+console logs behind env flag
+
+Add env flag:
+
+VITE_QUEUE_DEBUG=true
+
+in .env.local.
+
+Then engine logs only when enabled.
+
+Suggested test UI file:
+
+components/workspace/queue-debug/QueueDebugPanel.tsx
+
+Temporary only.
+
+It should show:
+
+running count
+queued count
+done count
+failed count
+cancelled count
+task list
+buttons: cancel, retry, clear completed
+
+Then temporarily render it in TextPage.tsx or App.tsx.
+
+Core expected behavior to verify:
+
+on page load:
+- 2 running max
+- several queued
+- progress starts ticking
+when running reaches done/failed:
+- next queued becomes running
+when cancel running:
+- progress stops immediately
+- next queued starts
+when retry failed:
+- task goes back to queued
+
+Console log format should be grouped:
+
+if (QUEUE_DEBUG) {
+  console.groupCollapsed(`[queue] ${event}`);
+  console.table(tasks.map(t => ({
+    id: t.id,
+    status: t.status,
+    progress: t.progress,
+    type: t.type,
+    createdAt: t.createdAt,
+  })));
+  console.groupEnd();
+}
+
+Tell Claude this exactly:
+
+Implement Task 1 only.
+Do not build Queue Page.
+Do not build Queue Widget.
+Create:
+- entities/generation/model/queue-types.ts
+- entities/generation/model/queue-seed.ts
+- entities/generation/model/queue-engine.ts
+- entities/generation/model/queue-context.tsx
+- components/workspace/queue-debug/QueueDebugPanel.tsx
+Add QueueProvider to app/providers/AppProviders.tsx.
+Add VITE_QUEUE_DEBUG support.
+The engine must start automatically when QueueProvider mounts.
+On page refresh, use seed data again.
+No localStorage persistence.
+No backend.
+No fetch.
+No Redux.
+Add a temporary QueueDebugPanel so I can visually verify the mock queue works before implementing real UI.
+
+That is the cleanest way to prove the engine works before touching design.

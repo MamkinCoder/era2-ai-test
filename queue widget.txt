@@ -1,0 +1,537 @@
+Rewritten spec with corrected placement/folders:
+
+Global Generation Status Bar Spec
+
+Goal
+
+Implement a global generation queue status bar connected to mocked queue state.
+
+It behaves like a browser download manager:
+
+* hidden when no active tasks exist
+* visible while there are queued or running generations
+* opens queue page on click or CTA
+
+Active tasks:
+
+running + queued
+
+The status bar and queue page must read the same queue store.
+
+No duplicated state.
+
+⸻
+
+Architecture
+
+Queue logic and queue UI are separated.
+
+Queue state lives in:
+
+entities/generation/model/
+
+Status bar UI lives in:
+
+features/generation-queue/ui/status-bar/
+
+Global mount lives in:
+
+app
+
+Chat-page inline trigger is rendered from chat/input pages near WorkspaceTabs.
+
+⸻
+
+Queue Model Files
+
+entities/generation/model/queue-types.ts
+entities/generation/model/queue-engine.ts
+entities/generation/model/queue-context.tsx
+entities/generation/model/queue-seed.ts
+
+Responsibilities:
+
+* queue task types
+* queue statuses
+* seed data
+* FIFO scheduling
+* MAX_CONCURRENT = 2
+* progress simulation
+* failure simulation
+* cancel/retry/clear actions
+* QueueProvider
+* useQueue()
+
+UI does not own queue engine state.
+
+⸻
+
+Status Bar UI Folder
+
+features/generation-queue/ui/status-bar/
+
+Files:
+
+GenerationQueueStatusBar.tsx
+GenerationQueueStatusPanel.tsx
+GenerationQueueStatusItem.tsx
+generation-queue-status.types.ts
+index.ts
+
+⸻
+
+Component Responsibilities
+
+GenerationQueueStatusBar.tsx
+
+Main component.
+
+Responsibilities:
+
+* reads queue state via useQueue()
+* filters active tasks: queued + running
+* returns null when no active tasks
+* owns expanded/collapsed UI state
+* supports placement modes
+* renders collapsed trigger
+* renders expanded panel through portal when needed
+* handles navigation to /queue
+* owns Framer Motion layout/show/hide animation
+
+This component owns both collapsed and expanded behavior.
+
+Do not create separate collapsed component.
+
+Reason:
+
+* Framer Motion layout animation works better when the same component owns the transition.
+
+⸻
+
+GenerationQueueStatusPanel.tsx
+
+Expanded panel content.
+
+Responsibilities:
+
+* render single-task expanded layout
+* render multi-task expanded layout
+* render summary header
+* render 2-3 active tasks
+* render “Открыть очередь →” CTA
+
+Receives props only.
+
+No direct queue context access.
+
+⸻
+
+GenerationQueueStatusItem.tsx
+
+Single row inside expanded multi-task list.
+
+Responsibilities:
+
+* task thumbnail/icon
+* prompt/title
+* status/progress
+* model name
+* mini progress bar
+
+Receives props only.
+
+No direct queue context access.
+
+⸻
+
+generation-queue-status.types.ts
+
+Local UI types.
+
+export type GenerationQueueStatusMode =
+  | "global"
+  | "inline-trigger"
+  | "mobile";
+export type GenerationQueueStatusTaskView = {
+  id: string;
+  type: "text" | "image" | "video" | "audio";
+  status: "queued" | "running";
+  prompt: string;
+  modelName: string;
+  progress: number;
+};
+
+Use domain status/types from queue-types.ts where possible.
+
+⸻
+
+Internal Private Components
+
+Keep private inside closest file unless reused later.
+
+Examples:
+
+* ProgressBar
+* StatusGlyph
+* Thumbnail
+* SummaryHeader
+* OpenQueueAction
+
+Do not create separate files yet.
+
+⸻
+
+Mounting
+
+Global Mount
+
+The global status bar should be mounted once near app/layout level.
+
+Preferred:
+
+app/App.tsx
+
+or if layout already wraps every page:
+
+widgets/layout/ui/Layout.tsx
+
+It should not be mounted separately on every normal page.
+
+Global mount decides whether current route is a chat route.
+
+Chat routes:
+
+/text
+/design
+/video
+/audio
+
+On chat routes:
+
+* global collapsed pill should not render
+* chat page renders inline trigger instead
+
+On non-chat routes:
+
+* global status bar renders fixed bottom-right
+
+⸻
+
+Modes
+
+mode=“global”
+
+Used on normal pages.
+
+Desktop/tablet placement:
+
+fixed bottom-6 right-6
+
+Behavior:
+
+* collapsed pill appears bottom-right
+* expanded panel appears bottom-right
+* click can expand/collapse
+* CTA navigates to /queue
+
+⸻
+
+mode=“inline-trigger”
+
+Used on chat pages desktop/tablet.
+
+Collapsed trigger is rendered in page flow near WorkspaceTabs/input block.
+
+It does not live inside:
+
+* send toolbar
+* WorkspaceTabs component
+
+Placement example:
+
+<div className="max-w-[780px] mx-auto relative">
+  <GenerationQueueStatusBar
+    mode="inline-trigger"
+    className="hidden md:block absolute right-0 top-0 translate-x-[calc(100%+12px)]"
+  />
+  <WorkspaceTabs variant="attached" />
+  <InputCard />
+</div>
+
+Behavior:
+
+* collapsed pill hangs to the right of the WorkspaceTabs/Input block line
+* does not block the send/generate button
+* click expands the full status panel through portal
+* expanded panel opens as regular global bottom-right overlay
+* expanded panel may cover content
+* expanded panel does not need collision avoidance
+
+⸻
+
+mode=“mobile”
+
+Used on mobile.
+
+Placement:
+
+* full-width bottom panel
+* fixed
+* safe-area aware
+* above bottom input/navigation zone if present
+
+Behavior:
+
+* no expand
+* one-line panel only
+* clicking navigates directly to /queue
+
+Example:
+
+<div className="fixed inset-x-3 bottom-[calc(env(safe-area-inset-bottom)+12px)] z-50 md:hidden">
+  <GenerationQueueStatusBar mode="mobile" />
+</div>
+
+If a page has fixed bottom input, use larger bottom offset:
+
+bottom-[calc(env(safe-area-inset-bottom)+96px)]
+
+⸻
+
+Index.tsx Scroll-To-Top Collision
+
+Main page:
+
+src/pages/Index.tsx
+
+has a scroll-to-top button:
+
+fixed bottom-6 right-6 w-10 h-10
+
+When scroll-to-top is hidden:
+
+* queue collapsed pill uses right-6
+
+When scroll-to-top is visible:
+
+* queue collapsed pill shifts left of it
+
+Spacing:
+
+24px right edge
+40px scroll button
+12px gap
+
+Queue right offset when scroll button visible:
+
+right-[76px]
+
+or:
+
+right-[calc(1.5rem+2.5rem+0.75rem)]
+
+Only collapsed/global default state needs this collision handling.
+
+Expanded panel does not need collision handling.
+
+⸻
+
+States
+
+Empty
+
+Condition:
+
+0 queued
+0 running
+
+Behavior:
+
+return null
+
+⸻
+
+One Active Task
+
+Condition:
+
+activeTasks.length === 1
+
+Desktop/tablet shows compact card:
+
+* spinner/status glyph
+* type/model
+* mini progress bar
+* percent
+
+Mobile shows one-line panel:
+
+* title
+* active count/progress
+* arrow
+* progress strip
+
+Click:
+
+* desktop/tablet can expand or navigate depending final UI choice
+* mobile navigates to /queue
+
+⸻
+
+Multiple Active Tasks
+
+Condition:
+
+activeTasks.length >= 2
+
+Desktop/tablet expanded/default view:
+
+* “Генерации идут”
+* “N активны · X%”
+* top 2-3 active tasks
+* “Открыть очередь →”
+
+Collapsed bonus state:
+
+* “N генераций · X%”
+* expands on click
+
+Mobile:
+
+* one-line full-width panel only
+* no expanded list
+* click navigates to /queue
+
+⸻
+
+Aggregate Progress
+
+For multiple active tasks:
+
+X = average progress of queued + running tasks
+
+Queued tasks count as:
+
+0%
+
+Running tasks use real progress.
+
+Round to nearest integer.
+
+⸻
+
+Portal
+
+Use Radix Portal.
+
+Use for:
+
+* global fixed rendering
+* expanded panel from inline-trigger mode
+* mobile fixed panel if mounted globally
+
+Do not use manual createPortal.
+
+Import:
+
+import { Portal } from "@radix-ui/react-portal";
+
+Add explicit dependency if not already in package.json:
+
+yarn add @radix-ui/react-portal
+
+⸻
+
+Framer Motion
+
+Use Framer Motion.
+
+Required for:
+
+* appearance/disappearance
+* expand/collapse
+* progress width animation
+* panel entrance/exit
+
+Use:
+
+AnimatePresence
+motion.div
+layout
+
+Avoid jitter on progress ticks:
+
+* animate progress bar width only
+* do not animate full container layout on every progress tick
+* avoid changing text width causing layout shift where possible
+* use tabular font for percent
+
+Progress:
+
+<motion.div animate={{ width: `${progress}%` }} />
+
+⸻
+
+Styling
+
+Use Tailwind only.
+
+No CSS modules.
+
+Prefer project tokens:
+
+var(--bg-card)
+var(--bg-pill)
+var(--bg-tag)
+var(--border-primary)
+var(--text-primary)
+var(--text-secondary)
+var(--text-muted)
+hsl(var(--primary))
+
+Exact Figma colors allowed:
+
+#1A1614
+#221C19
+#E85420
+#E85421
+#FF7A3D
+#F6EFE9
+#C8BEB6
+#8A7F78
+
+⸻
+
+Navigation
+
+Click behavior:
+
+* “Открыть очередь →” navigates to /queue
+* mobile panel click navigates to /queue
+* optional collapsed pill click expands on desktop/tablet
+
+Use project routing:
+
+import { useNavigate } from "@/shared/routing";
+
+or project-supported equivalent.
+
+⸻
+
+Non-Responsibilities
+
+Status bar does not implement:
+
+* scheduling
+* retry
+* cancel
+* timers
+* MAX_CONCURRENT
+* progress simulation
+* FIFO
+
+Those belong to:
+
+entities/generation/model/queue-engine.ts
+
+Status bar only displays active queue state and routes to /queue.
