@@ -1,5 +1,5 @@
 import type { SearchableModel } from "@/config/searchableModels";
-import { cn } from "@/shared/lib/utils";
+import { cn } from "@/shared/lib/cn";
 import { useNavigate } from "@/shared/routing";
 import { StatusBadge } from "@/shared/ui/era";
 import { ModelGlyph } from "@/shared/ui/era/ModelGlyph";

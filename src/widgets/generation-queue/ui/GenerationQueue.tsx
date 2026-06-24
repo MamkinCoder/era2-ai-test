@@ -1,15 +1,20 @@
 import { useState, useMemo, useEffect, useRef } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { useQueue } from "@/features/generation-queue/model/useQueue";
-import { toViewModel, getStats, filterTasks, sortTasks } from "@/features/generation-queue/model/selectors";
-import type { QueueStatusFilter, QueueSortMode } from "@/features/generation-queue/model/selectors";
-import { QueueStats } from "@/features/generation-queue/ui/QueueStats";
-import { QueueToolbar } from "@/features/generation-queue/ui/QueueToolbar";
-import { TaskCard } from "@/features/generation-queue/ui/TaskCard";
-import { TaskRow } from "@/features/generation-queue/ui/TaskRow";
-import { EmptyState } from "@/features/generation-queue/ui/states/EmptyState";
-import { LoadingState } from "@/features/generation-queue/ui/states/LoadingState";
-import { ErrorState } from "@/features/generation-queue/ui/states/ErrorState";
+import {
+  useQueue,
+  toViewModel,
+  getStats,
+  filterTasks,
+  sortTasks,
+  QueueStats,
+  QueueToolbar,
+  TaskCard,
+  TaskRow,
+  EmptyState,
+  LoadingState,
+  ErrorState,
+} from "@/features/generation-queue";
+import type { QueueStatusFilter, QueueSortMode } from "@/features/generation-queue";
 
 type InitStatus = "loading" | "ready" | "error";
 
@@ -70,10 +75,10 @@ function QueueHeader({
   return (
     <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
       <div>
-        <h1 className="text-[30px] font-bold leading-[1.3] text-[var(--c-fg)]">
+        <h1 className="text-[26px] md:text-[30px] font-bold leading-[1.3] text-[var(--c-fg)]">
           Очередь генераций
         </h1>
-        <p className="mt-1 text-[15px] text-[var(--c-fg-mute)]">
+        <p className="mt-1 text-[14px] md:text-[15px] text-[var(--c-fg-mute)]">
           Все ваши задачи в реальном времени
         </p>
       </div>

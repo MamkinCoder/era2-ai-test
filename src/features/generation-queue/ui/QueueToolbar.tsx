@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { Search, ChevronDown, X } from "lucide-react";
 import type { QueueStatusFilter, QueueSortMode } from "../model/selectors";
 
 const STATUS_TABS: { value: QueueStatusFilter; label: string }[] = [
@@ -69,16 +70,18 @@ export function QueueToolbar({
               </option>
             ))}
           </select>
-          <span className="pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2 text-[11px] text-[var(--c-fg-mute)]">
-            ▾
-          </span>
+          <ChevronDown
+            size={12}
+            className="pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2 text-[var(--c-fg-mute)]"
+          />
         </div>
       </div>
 
       <div className="relative">
-        <span className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-[13px] text-[var(--c-fg-low)]">
-          ⌕
-        </span>
+        <Search
+          size={14}
+          className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-[var(--c-fg-low)]"
+        />
         <input
           type="text"
           value={localSearch}
@@ -89,9 +92,9 @@ export function QueueToolbar({
         {localSearch && (
           <button
             onClick={() => setLocalSearch("")}
-            className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[12px] text-[var(--c-fg-low)] hover:text-[var(--c-fg-mute)] transition-colors"
+            className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[var(--c-fg-low)] hover:text-[var(--c-fg-mute)] transition-colors"
           >
-            ✕
+            <X size={12} />
           </button>
         )}
       </div>

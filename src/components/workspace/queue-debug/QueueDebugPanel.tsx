@@ -1,4 +1,4 @@
-import { useQueue } from "@/features/generation-queue/model/useQueue";
+import { useQueue } from "@/features/generation-queue";
 import type { QueueTask } from "@/entities/generation-task";
 
 const STATUS_COLOR: Record<string, string> = {

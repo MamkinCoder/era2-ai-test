@@ -1,5 +1,7 @@
-import { createContext, useEffect, useState, type ReactNode } from "react";
+import { createContext, useEffect, useReducer, type ReactNode } from "react";
 import { queueEngine } from "./queueEngine";
+import { queueReducer } from "./queueReducer";
+import type { QueueAction } from "./queueReducer";
 import type { QueueState, GenerationType } from "@/entities/generation-task";
 
 export interface QueueContextValue extends QueueState {
@@ -12,16 +14,16 @@ export interface QueueContextValue extends QueueState {
 
 export const QueueContext = createContext<QueueContextValue | null>(null);
 
+function stateReducer(state: QueueState, action: QueueAction): QueueState {
+  return { tasks: queueReducer(state.tasks, action) };
+}
+
 export function QueueProvider({ children }: { children: ReactNode }) {
-  const [state, setState] = useState<QueueState>(() => queueEngine.getState());
+  const [state, dispatch] = useReducer(stateReducer, queueEngine.getState());
 
   useEffect(() => {
-    queueEngine.start();
-    const unsub = queueEngine.subscribe(setState);
-    return () => {
-      unsub();
-      queueEngine.stop();
-    };
+    queueEngine.connect(dispatch);
+    return () => queueEngine.disconnect();
   }, []);
 
   const value: QueueContextValue = {

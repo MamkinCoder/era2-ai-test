@@ -1,18 +1,19 @@
+import { MessageSquare, Image, Video, Music, Layers } from "lucide-react";
 import { StatusBadge } from "./StatusBadge";
 import { ProgressBar } from "./ProgressBar";
 import { TaskActions } from "./TaskActions";
 import { TaskMeta } from "./TaskMeta";
 import type { QueueTaskViewModel } from "../model/selectors";
 
-const VISUAL_TYPES = new Set(["image", "video", "design"]);
-
-const TYPE_ICON: Record<string, string> = {
-  text: "💬",
-  image: "◐",
-  video: "▷",
-  audio: "♫",
-  design: "◐",
+const TYPE_ICON: Record<string, React.ElementType> = {
+  text: MessageSquare,
+  image: Image,
+  video: Video,
+  audio: Music,
+  design: Layers,
 };
+
+const VISUAL_TYPES = new Set(["image", "video", "design"]);
 
 function cardBorder(status: string) {
   if (status === "running") return "border border-[rgba(232,84,32,0.35)]";
@@ -28,20 +29,22 @@ export interface TaskCardProps {
 
 export function TaskCard({ task, onCancel, onRetry, onDelete }: TaskCardProps) {
   const isRunning = task.status === "running";
+  const Icon = TYPE_ICON[task.type] ?? Image;
+
   return (
     <div
       className={`flex flex-col bg-[var(--bg-card)] rounded-[16px] px-[14px] py-[14px] gap-3 ${cardBorder(task.status)}`}
     >
       <div className="flex items-start gap-3">
         <div
-          className="w-12 h-12 shrink-0 rounded-[12px] flex items-center justify-center text-[18px] text-[var(--c-accent-2)]"
+          className="w-12 h-12 shrink-0 rounded-[12px] flex items-center justify-center text-[var(--c-accent-2)]"
           style={{
             background: VISUAL_TYPES.has(task.type)
               ? "linear-gradient(135deg, var(--c-accent-soft), var(--c-bg-2))"
               : "var(--c-accent-soft)",
           }}
         >
-          {TYPE_ICON[task.type] ?? "◐"}
+          <Icon size={20} strokeWidth={1.5} />
         </div>
         <div className="flex-1 min-w-0 flex flex-col gap-[6px]">
           <p className="text-[15px] font-medium text-[var(--c-fg)] leading-[1.3] line-clamp-2">

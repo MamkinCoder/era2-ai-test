@@ -7,8 +7,7 @@ import {
 } from "@/entities/generation-task";
 import type { QueueTask, QueueState, GenerationType } from "@/entities/generation-task";
 import { queueReducer } from "./queueReducer";
-
-type Listener = (state: QueueState) => void;
+import type { QueueAction } from "./queueReducer";
 
 const STORAGE_KEY = "era2:queue:v1";
 
@@ -61,28 +60,24 @@ function log(event: string, tasks: QueueTask[]) {
 
 class QueueEngine {
   private tasks: QueueTask[] = loadPersisted() ?? clone(SEED_TASKS);
-  private listeners: Set<Listener> = new Set();
+  private _dispatch: ((action: QueueAction) => void) | null = null;
   private timers: Map<string, ReturnType<typeof setInterval>> = new Map();
-  private running = false;
+  private connected = false;
 
-  start() {
-    if (this.running) return;
-    this.running = true;
+  connect(dispatch: (action: QueueAction) => void) {
+    if (this.connected) return;
+    this.connected = true;
+    this._dispatch = dispatch;
     this.tasks.filter((t) => t.status === "running").forEach((t) => this.attachTimer(t));
     this.schedule();
-    log("start", this.tasks);
+    log("connect", this.tasks);
   }
 
-  stop() {
-    this.running = false;
+  disconnect() {
+    this.connected = false;
+    this._dispatch = null;
     this.timers.forEach((t) => clearInterval(t));
     this.timers.clear();
-  }
-
-  subscribe(listener: Listener) {
-    this.listeners.add(listener);
-    listener({ tasks: clone(this.tasks) });
-    return () => this.listeners.delete(listener);
   }
 
   getState(): QueueState {
@@ -91,23 +86,23 @@ class QueueEngine {
 
   cancel(id: string) {
     this.clearTimer(id);
-    this.dispatch({ type: "CANCEL", id });
+    this.act({ type: "CANCEL", id });
     this.schedule();
   }
 
   retry(id: string) {
-    this.dispatch({ type: "RETRY", id });
+    this.act({ type: "RETRY", id });
     this.schedule();
   }
 
   deleteTask(id: string) {
     this.clearTimer(id);
-    this.dispatch({ type: "DELETE", id });
+    this.act({ type: "DELETE", id });
     this.schedule();
   }
 
   clearCompleted() {
-    this.dispatch({ type: "CLEAR_COMPLETED" });
+    this.act({ type: "CLEAR_COMPLETED" });
   }
 
   addTask(type: GenerationType, prompt: string): string {
@@ -120,19 +115,20 @@ class QueueEngine {
       createdAt: Date.now(),
       retryCount: 0,
     };
-    this.dispatch({ type: "ADD", task });
+    this.act({ type: "ADD", task });
     this.schedule();
     return task.id;
   }
 
-  private dispatch(action: Parameters<typeof queueReducer>[1]) {
+  private act(action: QueueAction) {
     this.tasks = queueReducer(this.tasks, action);
     log(action.type, this.tasks);
-    this.emit();
+    persist(this.tasks);
+    this._dispatch?.(action);
   }
 
   private schedule() {
-    if (!this.running) return;
+    if (!this.connected) return;
     const runningCount = this.tasks.filter((t) => t.status === "running").length;
     const slots = MAX_CONCURRENT - runningCount;
     if (slots <= 0) return;
@@ -144,7 +140,7 @@ class QueueEngine {
   }
 
   private startTask(task: QueueTask) {
-    this.dispatch({ type: "START", id: task.id });
+    this.act({ type: "START", id: task.id });
     const started = this.tasks.find((t) => t.id === task.id)!;
     this.attachTimer(started);
   }
@@ -161,10 +157,10 @@ class QueueEngine {
       if (next >= 100) {
         this.clearTimer(task.id);
         const success = Math.random() >= FAILURE_RATE;
-        this.dispatch({ type: "FINISH", id: task.id, success, errorMessage: success ? undefined : randomError() });
+        this.act({ type: "FINISH", id: task.id, success, errorMessage: success ? undefined : randomError() });
         this.schedule();
       } else {
-        this.dispatch({ type: "PROGRESS", id: task.id, value: next });
+        this.act({ type: "PROGRESS", id: task.id, value: next });
       }
     }, 500);
     this.timers.set(task.id, timer);
@@ -173,12 +169,6 @@ class QueueEngine {
   private clearTimer(id: string) {
     const t = this.timers.get(id);
     if (t) { clearInterval(t); this.timers.delete(id); }
-  }
-
-  private emit() {
-    persist(this.tasks);
-    const state: QueueState = { tasks: clone(this.tasks) };
-    this.listeners.forEach((l) => l(state));
   }
 }
 
