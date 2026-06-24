@@ -1,4 +1,4 @@
-import type { GenerationType } from "@/entities/generation/model/queue-types";
+import type { GenerationType } from "@/entities/generation-task";
 
 export type GenerationQueueStatusMode = "global" | "inline-trigger" | "mobile";
 

@@ -1,5 +1,5 @@
-import { useQueue } from "@/entities/generation/model/queue-context";
-import type { QueueTask } from "@/entities/generation/model/queue-types";
+import { useQueue } from "@/features/generation-queue/model/useQueue";
+import type { QueueTask } from "@/entities/generation-task";
 
 const STATUS_COLOR: Record<string, string> = {
   queued: "#888",

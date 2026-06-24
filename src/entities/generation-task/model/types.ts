@@ -3,19 +3,9 @@ export const FAILURE_RATE = 0.15;
 
 export const QUEUE_DEBUG = import.meta.env.VITE_QUEUE_DEBUG === "true";
 
-export type QueueStatus =
-  | "queued"
-  | "running"
-  | "done"
-  | "failed"
-  | "cancelled";
+export type QueueStatus = "queued" | "running" | "done" | "failed" | "cancelled";
 
-export type GenerationType =
-  | "text"
-  | "image"
-  | "audio"
-  | "video"
-  | "design";
+export type GenerationType = "text" | "image" | "audio" | "video" | "design";
 
 export interface QueueTask {
   id: string;

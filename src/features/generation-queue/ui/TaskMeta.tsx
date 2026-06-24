@@ -1,14 +1,4 @@
-import type { QueueTaskStatus } from "./queue-page.types";
-
-export interface QueueTaskMetaProps {
-  modelName: string;
-  status: QueueTaskStatus;
-  credits: number;
-  durationLabel?: string;
-  queuePosition?: number;
-  errorMessage?: string;
-  compact?: boolean;
-}
+import type { QueueTaskViewModel } from "../model/selectors";
 
 function ModelPill({ modelName }: { modelName: string }) {
   return (
@@ -21,7 +11,7 @@ function ModelPill({ modelName }: { modelName: string }) {
   );
 }
 
-export function QueueTaskMeta({
+export function TaskMeta({
   modelName,
   status,
   credits,
@@ -29,7 +19,7 @@ export function QueueTaskMeta({
   queuePosition,
   errorMessage,
   compact,
-}: QueueTaskMetaProps) {
+}: Pick<QueueTaskViewModel, "modelName" | "status" | "credits" | "durationLabel" | "queuePosition" | "errorMessage"> & { compact?: boolean }) {
   let metaText: string | null = null;
 
   if (status === "running" && durationLabel) {
@@ -39,10 +29,8 @@ export function QueueTaskMeta({
       ? `позиция ${queuePosition} · ${credits} cr`
       : `позиция ${queuePosition} в очереди · ${credits} cr`;
   } else if (status === "done" && durationLabel) {
-    metaText = compact
-      ? durationLabel.replace("готово за ", "за ")
-      : `${durationLabel} · ${credits} cr`;
-    if (compact) metaText = `${metaText} · ${credits} cr`;
+    const short = durationLabel.replace("готово за ", "за ");
+    metaText = compact ? `${short} · ${credits} cr` : `${durationLabel} · ${credits} cr`;
   } else if (status === "failed") {
     metaText = errorMessage ?? "ошибка генерации";
   } else if (status === "cancelled") {

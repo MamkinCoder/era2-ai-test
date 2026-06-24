@@ -1,4 +1,4 @@
-import type { QueueTask } from "./queue-types";
+import type { QueueTask } from "./types";
 
 let _counter = 1;
 function id() {

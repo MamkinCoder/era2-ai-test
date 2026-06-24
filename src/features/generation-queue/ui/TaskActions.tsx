@@ -1,9 +1,9 @@
 import { useState, useRef, useEffect } from "react";
-import type { QueueTaskStatus } from "./queue-page.types";
+import type { QueueStatus } from "@/entities/generation-task";
 
-export interface QueueTaskActionsProps {
+export interface TaskActionsProps {
   taskId: string;
-  status: QueueTaskStatus;
+  status: QueueStatus;
   onCancel: (taskId: string) => void;
   onRetry: (taskId: string) => void;
   onDelete: (taskId: string) => void;
@@ -73,7 +73,7 @@ function MoreMenu({ taskId, onDelete }: { taskId: string; onDelete: (id: string)
   );
 }
 
-export function QueueTaskActions({ taskId, status, onCancel, onRetry, onDelete, large }: QueueTaskActionsProps) {
+export function TaskActions({ taskId, status, onCancel, onRetry, onDelete, large }: TaskActionsProps) {
   return (
     <div className="flex items-center gap-1.5">
       {(status === "queued" || status === "running") && (

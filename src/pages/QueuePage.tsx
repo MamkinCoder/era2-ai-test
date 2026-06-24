@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { QueuePageContent } from "@/components/workspace/queue-page";
+import { GenerationQueue } from "@/widgets/generation-queue";
 
 export default function QueuePage() {
   useEffect(() => {
@@ -9,7 +9,7 @@ export default function QueuePage() {
   return (
     <main className="min-h-screen bg-[var(--bg-primary)]">
       <div className="mx-auto w-full max-w-[1120px] px-4 py-10">
-        <QueuePageContent />
+        <GenerationQueue />
       </div>
     </main>
   );

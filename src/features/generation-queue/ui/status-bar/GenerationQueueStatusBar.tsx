@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { createPortal } from "react-dom";
 import { AnimatePresence, motion } from "framer-motion";
-import { useQueue } from "@/entities/generation/model/queue-context";
+import { useQueue } from "@/features/generation-queue/model/useQueue";
 import { useNavigate, useLocation } from "@/shared/routing";
 import { GenerationQueueStatusPanel } from "./GenerationQueueStatusPanel";
 import type { GenerationQueueStatusMode, GenerationQueueStatusTaskView } from "./generation-queue-status.types";

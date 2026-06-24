@@ -2,7 +2,7 @@ import { AppProviders } from "@/app/providers/AppProviders";
 import { AppRoutes } from "@/app/router";
 import { ErrorBoundary } from "@/components/shared/ErrorBoundary";
 import { QueueDebugPanel } from "@/components/workspace/queue-debug/QueueDebugPanel";
-import { QUEUE_DEBUG } from "@/entities/generation/model/queue-types";
+import { QUEUE_DEBUG } from "@/entities/generation-task";
 import { CopyToastProvider } from "@/features/copy-toast";
 import { GenerationQueueStatusBar } from "@/features/generation-queue";
 import { OnboardingTour } from "@/features/onboarding";

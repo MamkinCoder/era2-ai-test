@@ -2,7 +2,7 @@ import {
   PromptWindow,
   type GenType,
 } from "@/components/workspace/PromptWindow";
-import { useQueue } from "@/entities/generation/model/queue-context";
+import { useQueue } from "@/features/generation-queue";
 import { useAuth } from "@/features/auth";
 import { GenerationQueueStatusBar } from "@/features/generation-queue";
 import { Link, useNavigate } from "@/shared/routing";
