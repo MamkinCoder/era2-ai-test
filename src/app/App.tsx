@@ -8,6 +8,7 @@ import { DailyCheckIn } from "@/features/promo";
 import { CornerPromo } from "@/features/promo";
 import { QueueDebugPanel } from "@/components/workspace/queue-debug/QueueDebugPanel";
 import { QUEUE_DEBUG } from "@/entities/generation/model/queue-types";
+import { GenerationQueueStatusBar } from "@/features/generation-queue";
 
 export default function App() {
   return (
@@ -21,6 +22,8 @@ export default function App() {
       <CopyToastProvider />
       <DailyCheckIn />
       <CornerPromo />
+      <GenerationQueueStatusBar mode="global" skipRoutes={["/"]} />
+      <GenerationQueueStatusBar mode="mobile" />
       {QUEUE_DEBUG && <QueueDebugPanel />}
     </AppProviders>
   );

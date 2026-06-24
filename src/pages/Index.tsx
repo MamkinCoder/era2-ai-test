@@ -1,24 +1,29 @@
-import { useState, useEffect } from "react";
-import { Link, useNavigate } from "@/shared/routing";
+import {
+  PromptWindow,
+  type GenType,
+} from "@/components/workspace/PromptWindow";
+import { useQueue } from "@/entities/generation/model/queue-context";
 import { useAuth } from "@/features/auth";
-import { ArrowUp, Star } from "lucide-react";
+import { GenerationQueueStatusBar } from "@/features/generation-queue";
+import { Link, useNavigate } from "@/shared/routing";
 import { Eyebrow } from "@/shared/ui/era";
-import { PromptWindow, type GenType } from "@/components/workspace/PromptWindow";
+import { ArrowUp, Star } from "lucide-react";
+import { useEffect, useState } from "react";
 
-import { Footer } from "@/components/shared/Footer";
-import { motion } from "framer-motion";
-import { DesignCreativitySection } from "@/components/home/DesignCreativitySection";
 import { AllModelsSection } from "@/components/home/AllModelsSection";
-import { TextAssistantsSection } from "@/components/home/TextAssistantsSection";
-import { ModelTagsCloud } from "@/components/home/ModelTagsCloud";
-import { StartCreatingSection } from "@/components/home/StartCreatingSection";
-import { LearnAIBanner } from "@/components/home/LearnAIBanner";
+import { DesignCreativitySection } from "@/components/home/DesignCreativitySection";
 import { HomeFAQ } from "@/components/home/HomeFAQ";
-import { ModelsMarquee } from "@/components/home/ModelsMarquee";
-import { QuickActions } from "@/components/home/QuickActions";
 import { HomeHowItWorks } from "@/components/home/HomeHowItWorks";
 import { HomeShowcase } from "@/components/home/HomeShowcase";
+import { LearnAIBanner } from "@/components/home/LearnAIBanner";
+import { ModelsMarquee } from "@/components/home/ModelsMarquee";
+import { ModelTagsCloud } from "@/components/home/ModelTagsCloud";
 import { PopularToolsSection } from "@/components/home/PopularToolsSection";
+import { QuickActions } from "@/components/home/QuickActions";
+import { StartCreatingSection } from "@/components/home/StartCreatingSection";
+import { TextAssistantsSection } from "@/components/home/TextAssistantsSection";
+import { Footer } from "@/components/shared/Footer";
+import { AnimatePresence, motion } from "framer-motion";
 
 const fadeUp = {
   hidden: { opacity: 0, y: 20 },
@@ -29,6 +34,10 @@ const stagger = { show: { transition: { staggerChildren: 0.08 } } };
 const Index = () => {
   const { isAuthed } = useAuth();
   const navigate = useNavigate();
+  const { tasks } = useQueue();
+  const hasActiveQueue = tasks.some(
+    (t) => t.status === "queued" || t.status === "running",
+  );
   const ctaLink = isAuthed ? "/design" : "/auth";
   const [showTop, setShowTop] = useState(false);
   const [genType, setGenType] = useState<GenType>("image");
@@ -60,7 +69,9 @@ const Index = () => {
     setPrompt(preset);
     // best-effort focus into the prompt textarea (we can't touch PromptWindow)
     setTimeout(() => {
-      const ta = document.querySelector<HTMLTextAreaElement>(".max-w-\\[880px\\] textarea");
+      const ta = document.querySelector<HTMLTextAreaElement>(
+        ".max-w-\\[880px\\] textarea",
+      );
       if (ta) {
         ta.focus();
         const len = ta.value.length;
@@ -102,8 +113,8 @@ const Index = () => {
             variants={fadeUp}
             className="text-muted-foreground text-base md:text-lg max-w-xl mx-auto mb-6 leading-relaxed"
           >
-            Подключайтесь к ChatGPT, Claude, Gemini, Midjourney, Sora и ещё 90+ нейросетям через
-            единую подписку. Оплата в рублях, без VPN.
+            Подключайтесь к ChatGPT, Claude, Gemini, Midjourney, Sora и ещё 90+
+            нейросетям через единую подписку. Оплата в рублях, без VPN.
           </motion.p>
           <motion.div
             variants={fadeUp}
@@ -111,12 +122,18 @@ const Index = () => {
           >
             <div className="flex">
               {[...Array(5)].map((_, i) => (
-                <Star key={i} className="h-4 w-4 fill-[#ffb27a] text-[#ffb27a]" />
+                <Star
+                  key={i}
+                  className="h-4 w-4 fill-[#ffb27a] text-[#ffb27a]"
+                />
               ))}
             </div>
             <span>Бета-тестирование · Присоединяйтесь первыми</span>
             <span className="mx-2 opacity-40">·</span>
-            <Link to={ctaLink} className="text-[hsl(var(--primary))] hover:underline font-medium">
+            <Link
+              to={ctaLink}
+              className="text-[hsl(var(--primary))] hover:underline font-medium"
+            >
               Начать бесплатно
             </Link>
           </motion.div>
@@ -154,10 +171,26 @@ const Index = () => {
           </h2>
           <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
             {[
-              { label: "Генерация текста", to: "/tools/text-generation", emoji: "💬" },
-              { label: "Генерация изображений", to: "/tools/image-generation", emoji: "🎨" },
-              { label: "Генерация видео", to: "/tools/video-generation", emoji: "🎬" },
-              { label: "Генерация аудио", to: "/tools/audio-generation", emoji: "🎵" },
+              {
+                label: "Генерация текста",
+                to: "/tools/text-generation",
+                emoji: "💬",
+              },
+              {
+                label: "Генерация изображений",
+                to: "/tools/image-generation",
+                emoji: "🎨",
+              },
+              {
+                label: "Генерация видео",
+                to: "/tools/video-generation",
+                emoji: "🎬",
+              },
+              {
+                label: "Генерация аудио",
+                to: "/tools/audio-generation",
+                emoji: "🎵",
+              },
               { label: "ИИ-агенты", to: "/tools/agents", emoji: "🤖" },
               { label: "Nano Banana", to: "/tools/nano-banana", emoji: "🍌" },
             ].map((item) => (
@@ -167,7 +200,9 @@ const Index = () => {
                 className="flex items-center gap-3 p-4 rounded-2xl border border-border bg-secondary hover:bg-card hover:border-primary/30 transition-all"
               >
                 <span className="text-2xl">{item.emoji}</span>
-                <span className="text-sm font-medium text-foreground">{item.label}</span>
+                <span className="text-sm font-medium text-foreground">
+                  {item.label}
+                </span>
               </Link>
             ))}
           </div>
@@ -197,28 +232,34 @@ const Index = () => {
                 <div>
                   <h3 className="text-lg font-bold italic mb-1">Обучение</h3>
                   <div className="flex flex-wrap gap-2 mb-2">
-                    {["Школа", "Академия", "Мастер-классы", "Туториалы"].map((t) => (
-                      <span key={t} className="text-xs text-muted-foreground">
-                        {t} •
-                      </span>
-                    ))}
+                    {["Школа", "Академия", "Мастер-классы", "Туториалы"].map(
+                      (t) => (
+                        <span key={t} className="text-xs text-muted-foreground">
+                          {t} •
+                        </span>
+                      ),
+                    )}
                   </div>
                   <p className="text-sm text-muted-foreground leading-relaxed">
-                    В ERA2 AI обучение — это часть экосистемы. Видео и практические материалы по
-                    работе с нейросетями, разбор реальных кейсов.
+                    В ERA2 AI обучение — это часть экосистемы. Видео и
+                    практические материалы по работе с нейросетями, разбор
+                    реальных кейсов.
                   </p>
                 </div>
 
                 <div>
                   <h3 className="text-lg font-bold mb-1">Сообщество</h3>
                   <p className="text-sm text-muted-foreground leading-relaxed">
-                    Наше сообщество — место где креаторы делятся опытом и находят вдохновение.
+                    Наше сообщество — место где креаторы делятся опытом и
+                    находят вдохновение.
                   </p>
                 </div>
 
                 <div>
                   <h3 className="text-lg font-bold mb-1">Медиа</h3>
-                  <p className="text-xs text-muted-foreground mb-1">Рост вместе с ERA2.AI</p>
+                  <p className="text-xs text-muted-foreground mb-1">
+                    Рост вместе с ERA2.AI
+                  </p>
                   <p className="text-sm text-muted-foreground leading-relaxed">
                     Следите за новостями и обновлениями в наших каналах.
                   </p>
@@ -233,14 +274,25 @@ const Index = () => {
       <HomeFAQ />
       <Footer />
 
-      {showTop && (
-        <button
-          onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
-          className="fixed bottom-6 right-6 w-10 h-10 rounded-full gradient-accent text-white flex items-center justify-center glow-accent hover:opacity-90 transition-opacity z-40"
-        >
-          <ArrowUp className="w-4 h-4" />
-        </button>
-      )}
+      {/* Queue pill — shifts left when scroll-to-top button is visible */}
+      <GenerationQueueStatusBar mode="global" rightShifted={showTop} />
+
+      <AnimatePresence>
+        {showTop && (
+          <motion.button
+            onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+            // bottom is driven by Tailwind classes + CSS transition so md:bottom-6 wins on desktop.
+            // Framer Motion only handles opacity/scale.
+            className={`fixed right-6 md:bottom-6 w-10 h-10 rounded-full gradient-accent text-white flex items-center justify-center glow-accent hover:opacity-90 z-40 transition-[bottom] duration-300 ease-out ${hasActiveQueue ? "bottom-20" : "bottom-6"}`}
+            initial={{ opacity: 0, scale: 0.7 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.7 }}
+            transition={{ duration: 0.2 }}
+          >
+            <ArrowUp className="w-4 h-4" />
+          </motion.button>
+        )}
+      </AnimatePresence>
     </div>
   );
 };
