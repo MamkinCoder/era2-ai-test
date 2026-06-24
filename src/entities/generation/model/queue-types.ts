@@ -42,3 +42,21 @@ export const TICK_SPEED: Record<GenerationType, number> = {
   video: 3,
   design: 5,
 };
+
+/** Default model name shown in UI for each generation type */
+export const MODEL_NAMES: Record<GenerationType, string> = {
+  text: "GPT-4o",
+  image: "Midjourney v6",
+  video: "Sora",
+  audio: "ElevenLabs",
+  design: "Stable Diffusion",
+};
+
+/** Credit cost per generation type */
+export const CREDITS: Record<GenerationType, number> = {
+  text: 6,
+  image: 80,
+  video: 200,
+  audio: 40,
+  design: 80,
+};

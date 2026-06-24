@@ -16,11 +16,13 @@ import ImageGenerationPage from "@/pages/ImageGenerationPage";
 import VideoGenerationPage from "@/pages/VideoGenerationPage";
 import AudioGenerationPage from "@/pages/AudioGenerationPage";
 import NanoBananaPage from "@/pages/NanoBananaPage";
+import QueuePage from "@/pages/QueuePage";
 import ToolPage from "@/pages/ToolPage";
 import NotFound from "@/pages/NotFound";
 
 const routes: Record<string, React.ComponentType> = {
   "/": Index,
+  "/queue": QueuePage,
   "/text": TextPage,
   "/design": DesignPage,
   "/video": VideoPage,
