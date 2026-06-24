@@ -7,6 +7,7 @@ export interface QueueTaskCardProps {
   task: QueueTaskViewModel;
   onCancel: (taskId: string) => void;
   onRetry: (taskId: string) => void;
+  onDelete: (taskId: string) => void;
 }
 
 const VISUAL_TYPES = new Set(["image", "video", "design"]);
@@ -19,7 +20,6 @@ const TYPE_ICON: Record<string, string> = {
   design: "◐",
 };
 
-// done/failed use rgba since there are no tokens for success/danger bg
 const BADGE: Record<string, { label: string; bg: string; color: string }> = {
   running: {
     label: "Идёт",
@@ -100,7 +100,7 @@ function TaskIconMobile({ type }: { type: string }) {
   );
 }
 
-export function QueueTaskCard({ task, onCancel, onRetry }: QueueTaskCardProps) {
+export function QueueTaskCard({ task, onCancel, onRetry, onDelete }: QueueTaskCardProps) {
   const isRunning = task.status === "running";
   const border = cardBorder(task.status);
 
@@ -147,6 +147,7 @@ export function QueueTaskCard({ task, onCancel, onRetry }: QueueTaskCardProps) {
             status={task.status}
             onCancel={onCancel}
             onRetry={onRetry}
+            onDelete={onDelete}
             large
           />
         </div>
@@ -187,6 +188,7 @@ export function QueueTaskCard({ task, onCancel, onRetry }: QueueTaskCardProps) {
             status={task.status}
             onCancel={onCancel}
             onRetry={onRetry}
+            onDelete={onDelete}
           />
         </div>
       </div>

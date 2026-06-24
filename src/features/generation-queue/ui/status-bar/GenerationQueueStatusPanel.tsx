@@ -53,12 +53,10 @@ export function GenerationQueueStatusPanel({ tasks, aggregateProgress, onOpenQue
   const visible = tasks.slice(0, MAX_VISIBLE);
   const overflow = tasks.length - MAX_VISIBLE;
 
-  // Orange glow = main shadow + 1px accent ring + soft diffuse glow
   const panelClass =
     "bg-[var(--c-bg-2)] border rounded-[14px] overflow-hidden " +
     "shadow-[0_16px_40px_rgba(0,0,0,0.55),0_0_0_1px_rgba(232,84,32,0.25),0_0_24px_rgba(232,84,32,0.12)]";
 
-  // ── Single task ───────────────────────────────────────────────────────────
   if (tasks.length === 1) {
     const task = tasks[0];
     return (
@@ -102,7 +100,6 @@ export function GenerationQueueStatusPanel({ tasks, aggregateProgress, onOpenQue
     );
   }
 
-  // ── Multiple tasks ────────────────────────────────────────────────────────
   return (
     <div className={`${panelClass} w-[332px]`}>
       {/* Header */}

@@ -9,6 +9,28 @@ import {
 } from "./queue-types";
 import { SEED_TASKS } from "./queue-seed";
 
+const STORAGE_KEY = "era2:queue:v1";
+
+function loadPersistedTasks(): QueueTask[] | null {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return null;
+    const tasks: QueueTask[] = JSON.parse(raw);
+    return tasks.map((t) =>
+      t.status === "running" ? { ...t, status: "queued", progress: 0, startedAt: undefined } : t
+    );
+  } catch {
+    return null;
+  }
+}
+
+function persistTasks(tasks: QueueTask[]) {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks));
+  } catch {
+  }
+}
+
 type Listener = (state: QueueState) => void;
 
 function log(event: string, tasks: QueueTask[]) {
@@ -36,7 +58,7 @@ function genId() {
 }
 
 class QueueEngine {
-  private tasks: QueueTask[] = clone(SEED_TASKS);
+  private tasks: QueueTask[] = loadPersistedTasks() ?? clone(SEED_TASKS);
   private listeners: Set<Listener> = new Set();
   private timers: Map<string, ReturnType<typeof setInterval>> = new Map();
   private running = false;
@@ -44,7 +66,6 @@ class QueueEngine {
   start() {
     if (this.running) return;
     this.running = true;
-    // Attach timers to seed tasks already in running state (they have no timers yet)
     this.tasks
       .filter((t) => t.status === "running")
       .forEach((t) => this.attachTimer(t));
@@ -99,6 +120,17 @@ class QueueEngine {
     if (this.tasks.length !== before) {
       log("clearCompleted", this.tasks);
       this.emit();
+    }
+  }
+
+  deleteTask(id: string) {
+    this.clearTimer(id);
+    const before = this.tasks.length;
+    this.tasks = this.tasks.filter((t) => t.id !== id);
+    if (this.tasks.length !== before) {
+      log("delete", this.tasks);
+      this.emit();
+      this.schedule();
     }
   }
 
@@ -187,6 +219,7 @@ class QueueEngine {
   }
 
   private emit() {
+    persistTasks(this.tasks);
     const state: QueueState = { tasks: clone(this.tasks) };
     this.listeners.forEach((l) => l(state));
   }

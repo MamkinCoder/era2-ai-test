@@ -7,7 +7,6 @@ export interface QueueTaskMetaProps {
   durationLabel?: string;
   queuePosition?: number;
   errorMessage?: string;
-  /** Compact mode: shorter text, no separator element between pill and text */
   compact?: boolean;
 }
 

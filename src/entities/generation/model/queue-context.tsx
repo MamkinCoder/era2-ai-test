@@ -11,6 +11,7 @@ import type { QueueState, GenerationType } from "./queue-types";
 interface QueueContextValue extends QueueState {
   cancel: (id: string) => void;
   retry: (id: string) => void;
+  deleteTask: (id: string) => void;
   clearCompleted: () => void;
   addTask: (type: GenerationType, prompt: string) => string;
 }
@@ -33,6 +34,7 @@ export function QueueProvider({ children }: { children: ReactNode }) {
     ...state,
     cancel: (id) => queueEngine.cancel(id),
     retry: (id) => queueEngine.retry(id),
+    deleteTask: (id) => queueEngine.deleteTask(id),
     clearCompleted: () => queueEngine.clearCompleted(),
     addTask: (type, prompt) => queueEngine.addTask(type, prompt),
   };

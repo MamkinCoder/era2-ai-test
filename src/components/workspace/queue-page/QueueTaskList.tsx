@@ -6,6 +6,7 @@ export interface QueueTaskListProps {
   tasks: QueueTaskViewModel[];
   onCancel: (taskId: string) => void;
   onRetry: (taskId: string) => void;
+  onDelete: (taskId: string) => void;
 }
 
 const taskVariants = {
@@ -14,7 +15,7 @@ const taskVariants = {
   exit: { opacity: 0, y: -8 },
 };
 
-export function QueueTaskList({ tasks, onCancel, onRetry }: QueueTaskListProps) {
+export function QueueTaskList({ tasks, onCancel, onRetry, onDelete }: QueueTaskListProps) {
   if (tasks.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center gap-2 rounded-[16px] border border-dashed border-[var(--c-line)] py-16 text-center">
@@ -37,7 +38,7 @@ export function QueueTaskList({ tasks, onCancel, onRetry }: QueueTaskListProps) 
             exit="exit"
             transition={{ duration: 0.18 }}
           >
-            <QueueTaskCard task={task} onCancel={onCancel} onRetry={onRetry} />
+            <QueueTaskCard task={task} onCancel={onCancel} onRetry={onRetry} onDelete={onDelete} />
           </motion.div>
         ))}
       </AnimatePresence>

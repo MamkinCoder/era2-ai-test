@@ -35,11 +35,8 @@ const CHAT_ROUTES = ["/text", "/design", "/video", "/audio"];
 interface Props {
   mode?: GenerationQueueStatusMode;
   className?: string;
-  /** Shifts pill left by (40px button + 12px gap) to avoid scroll-to-top button */
   rightShifted?: boolean;
-  /** On pill click navigate to /queue instead of expanding (mobile inline pill) */
   navigateOnClick?: boolean;
-  /** Extra routes where this instance should return null (used to avoid double-mount) */
   skipRoutes?: string[];
 }
 
@@ -73,7 +70,6 @@ function matchesRoute(pathname: string, routes: string[]): boolean {
   return routes.some((r) => pathname === r || pathname.startsWith(r + "/"));
 }
 
-// Full-width bar used in mobile mode and mobile inline-trigger
 function MobileBar({
   activeTasks,
   aggregateProgress,
@@ -161,7 +157,6 @@ export function GenerationQueueStatusBar({
     }
   };
 
-  // ── Collapsed pill ────────────────────────────────────────────────────────
   const countLabel =
     activeTasks.length === 1 ? "1 генерация" : `${activeTasks.length} генерации`;
 
@@ -180,7 +175,6 @@ export function GenerationQueueStatusBar({
     </button>
   );
 
-  // ── Expanded panel portal ─────────────────────────────────────────────────
   const expandedPanel = createPortal(
     <AnimatePresence>
       {expanded && (
@@ -204,7 +198,6 @@ export function GenerationQueueStatusBar({
     document.body,
   );
 
-  // ── Mobile mode ───────────────────────────────────────────────────────────
   if (mode === "mobile") {
     return createPortal(
       <div className="md:hidden fixed bottom-[calc(env(safe-area-inset-bottom,0px)+12px)] inset-x-3 z-50">
@@ -218,9 +211,7 @@ export function GenerationQueueStatusBar({
     );
   }
 
-  // ── Inline-trigger mode ───────────────────────────────────────────────────
   if (mode === "inline-trigger") {
-    // Mobile: full-width bar navigates directly
     if (navigateOnClick) {
       return (
         <MobileBar
@@ -232,7 +223,6 @@ export function GenerationQueueStatusBar({
       );
     }
 
-    // Desktop: small pill, expands to portal panel
     return (
       <>
         <div className={className}>
@@ -255,9 +245,6 @@ export function GenerationQueueStatusBar({
     );
   }
 
-  // ── Global mode ───────────────────────────────────────────────────────────
-  // initial.right matches animate.right so position doesn't animate on first mount.
-  // When rightShifted changes while the pill is visible, the spring runs.
   const pillRight = rightShifted ? 76 : 24;
   return createPortal(
     <>

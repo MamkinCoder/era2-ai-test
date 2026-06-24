@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useQueue } from "@/entities/generation/model/queue-context";
 import { TICK_SPEED, MODEL_NAMES, CREDITS } from "@/entities/generation/model/queue-types";
 import type { GenerationType } from "@/entities/generation/model/queue-types";
@@ -8,7 +8,6 @@ import { QueueToolbar } from "./QueueToolbar";
 import { QueueTaskList } from "./QueueTaskList";
 import type { QueueStatusFilter, QueueSortMode, QueueTaskViewModel } from "./queue-page.types";
 
-/** Total seconds to go from 0→100 progress for each type, derived from TICK_SPEED (500ms/tick) */
 function totalDurationSec(type: GenerationType): number {
   return (100 / TICK_SPEED[type]) * 0.5;
 }
@@ -26,12 +25,30 @@ const STATUS_ORDER: Record<string, number> = {
   cancelled: 4,
 };
 
+type InitStatus = "loading" | "ready" | "error";
+
+function simulateInit(): Promise<void> {
+  return new Promise((resolve, reject) =>
+    setTimeout(() => (Math.random() < 0.05 ? reject() : resolve()), 600),
+  );
+}
+
 export function QueuePageContent() {
-  const { tasks, cancel, retry, clearCompleted } = useQueue();
+  const { tasks, cancel, retry, deleteTask, clearCompleted } = useQueue();
+  const [initStatus, setInitStatus] = useState<InitStatus>("loading");
   const [statusFilter, setStatusFilter] = useState<QueueStatusFilter>("all");
   const [sortMode, setSortMode] = useState<QueueSortMode>("activeFirst");
+  const [search, setSearch] = useState("");
 
-  // Map raw QueueTask → QueueTaskViewModel
+  useEffect(() => {
+    let cancelled = false;
+    setInitStatus("loading");
+    simulateInit()
+      .then(() => { if (!cancelled) setInitStatus("ready"); })
+      .catch(() => { if (!cancelled) setInitStatus("error"); });
+    return () => { cancelled = true; };
+  }, []);
+
   const queuedIds = useMemo(
     () => tasks.filter((t) => t.status === "queued").map((t) => t.id),
     [tasks],
@@ -67,7 +84,6 @@ export function QueuePageContent() {
     });
   }, [tasks, queuedIds]);
 
-  // Stats from full list
   const stats = useMemo(
     () => ({
       queued: tasks.filter((t) => t.status === "queued").length,
@@ -78,25 +94,65 @@ export function QueuePageContent() {
     [tasks],
   );
 
-  // Filter
-  const filtered = useMemo(
-    () =>
-      statusFilter === "all"
-        ? viewModels
-        : viewModels.filter((t) => t.status === statusFilter),
-    [viewModels, statusFilter],
-  );
+  const filtered = useMemo(() => {
+    let list = statusFilter === "all" ? viewModels : viewModels.filter((t) => t.status === statusFilter);
+    if (search) {
+      const q = search.toLowerCase();
+      list = list.filter((t) => t.prompt.toLowerCase().includes(q));
+    }
+    return list;
+  }, [viewModels, statusFilter, search]);
 
-  // Sort
   const sorted = useMemo(() => {
     const copy = [...filtered];
     if (sortMode === "newest") return copy.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
     if (sortMode === "oldest") return copy.sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
-    // activeFirst
     return copy.sort(
       (a, b) => (STATUS_ORDER[a.status] ?? 9) - (STATUS_ORDER[b.status] ?? 9),
     );
   }, [filtered, sortMode]);
+
+  if (initStatus === "loading") {
+    return (
+      <div className="flex flex-col gap-6">
+        {/* skeleton header */}
+        <div className="h-[68px] rounded-[16px] bg-[var(--c-bg-2)] animate-pulse" />
+        {/* skeleton stats */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-[10px] md:gap-3">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="h-[82px] md:h-[94px] rounded-[16px] bg-[var(--c-bg-2)] animate-pulse" />
+          ))}
+        </div>
+        {/* skeleton rows */}
+        <div className="flex flex-col gap-[10px]">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <div key={i} className="h-[88px] rounded-[16px] bg-[var(--c-bg-2)] animate-pulse" style={{ opacity: 1 - i * 0.15 }} />
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  if (initStatus === "error") {
+    return (
+      <div className="flex flex-col items-center justify-center gap-4 py-24 text-center">
+        <span className="text-3xl">⚠</span>
+        <p className="text-[15px] font-medium text-[var(--c-fg)]">Не удалось загрузить очередь</p>
+        <p className="text-[13px] text-[var(--c-fg-mute)]">Проверьте соединение и попробуйте снова</p>
+        <button
+          onClick={() => {
+            setInitStatus("loading");
+            simulateInit()
+              .then(() => setInitStatus("ready"))
+              .catch(() => setInitStatus("error"));
+          }}
+          className="mt-2 h-[38px] px-5 rounded-full bg-[var(--c-accent)] text-white text-[13px] font-medium hover:opacity-90 transition-opacity"
+        >
+          Повторить
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col gap-6">
@@ -108,10 +164,12 @@ export function QueuePageContent() {
       <QueueToolbar
         status={statusFilter}
         sort={sortMode}
+        search={search}
         onStatusChange={setStatusFilter}
         onSortChange={setSortMode}
+        onSearchChange={setSearch}
       />
-      <QueueTaskList tasks={sorted} onCancel={cancel} onRetry={retry} />
+      <QueueTaskList tasks={sorted} onCancel={cancel} onRetry={retry} onDelete={deleteTask} />
     </div>
   );
 }

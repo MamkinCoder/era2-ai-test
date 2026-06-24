@@ -34,7 +34,6 @@ export interface QueueState {
   tasks: QueueTask[];
 }
 
-/** Speed in progress-points per tick (tick = 500ms) */
 export const TICK_SPEED: Record<GenerationType, number> = {
   text: 12,
   image: 6,
@@ -43,7 +42,6 @@ export const TICK_SPEED: Record<GenerationType, number> = {
   design: 5,
 };
 
-/** Default model name shown in UI for each generation type */
 export const MODEL_NAMES: Record<GenerationType, string> = {
   text: "GPT-4o",
   image: "Midjourney v6",
@@ -52,7 +50,6 @@ export const MODEL_NAMES: Record<GenerationType, string> = {
   design: "Stable Diffusion",
 };
 
-/** Credit cost per generation type */
 export const CREDITS: Record<GenerationType, number> = {
   text: 6,
   image: 80,
