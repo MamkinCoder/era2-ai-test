@@ -42,7 +42,7 @@ export function QueueToolbar({
 
   return (
     <div className="flex flex-col gap-3">
-      <div className="flex items-center justify-between gap-4">
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 md:gap-4">
         <div className="flex items-center gap-2 overflow-x-auto scrollbar-none flex-nowrap md:flex-wrap pb-0.5 md:pb-0">
           {STATUS_TABS.map((tab) => (
             <button
@@ -58,7 +58,7 @@ export function QueueToolbar({
             </button>
           ))}
         </div>
-        <div className="shrink-0 relative">
+        <div className="shrink-0 relative self-start">
           <select
             value={sort}
             onChange={(e) => onSortChange(e.target.value as QueueSortMode)}
